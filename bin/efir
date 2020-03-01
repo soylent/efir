@@ -1,0 +1,200 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'optparse'
+
+op = OptionParser.new do |opts|
+  opts.banner =
+    "Usage: efir [options] [file]...\n" \
+    'Test and deploy Ethereum contracts'
+
+  opts.summary_width = 20
+
+  opts.separator ''
+  opts.separator 'Commands'
+  opts.on('-d', '--deploy NAME', String, 'Deploy contract')
+  opts.on('-t', '--test', 'Test files')
+  opts.on('-v', '--version', 'Show version and exit') do
+    spec = Gem::Specification.load('efir.gemspec')
+    puts spec.version
+    exit
+  end
+
+  opts.separator 'Options'
+  opts.on_tail('-e', '--env FILE', 'Read env file, default: .env')
+  opts.on_tail('-h', '--help', 'Print this help') do
+    puts opts
+    exit
+  end
+end
+
+begin
+  op.parse!(into: opts = { env: '.env' })
+rescue OptionParser::ParseError => err
+  warn(err)
+  abort(op.to_s)
+else
+  test, deploy = opts.values_at(:test, :deploy)
+
+  abort(op.to_s) if test && deploy or not test || deploy
+end
+
+if File.exist?('lib/efir.rb')
+  $LOAD_PATH.unshift(File.expand_path('lib'))
+  opts[:debug] = true
+end
+
+require 'json'
+require 'efir'
+
+module CLI
+  def self.run(opts)
+    trap(:INT) { error('aborted') }
+
+    read_env(opts.fetch(:env))
+
+    chain_id = ENV['EFIR_CHAIN_ID']
+    key = ENV['EFIR_KEY'] || '4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7'
+    url = ENV['EFIR_URL'] || 'http://127.0.0.1:8545'
+
+    begin
+      efir = Efir.new(url: url, key: key, chain_id: chain_id)
+
+      if opts[:test]
+        abort unless test(efir)
+      else
+        deploy(opts[:deploy], efir)
+      end
+    rescue => err
+      warn(err.full_message) if opts[:debug]
+
+      error(err)
+    ensure
+      efir&.close
+    end
+  end
+
+  def self.error(msg)
+    prog = File.basename($PROGRAM_NAME)
+
+    abort("#{prog}: #{msg}")
+  end
+
+  private_class_method :error
+
+  def self.read_env(file)
+    return unless File.exist?(file)
+
+    IO.foreach(file, chomp: true) do |kv|
+      next if kv.empty? || kv.start_with?('#')
+
+      key, value = kv.split('=', 2)
+      ENV[key] ||= value
+    end
+  rescue SystemCallError
+    error("cannot read: #{file.inspect}")
+  end
+
+  private_class_method :read_env
+
+  def self.each_contract
+    files = ARGV.empty? ? [$stdin] : ARGV
+    files.each do |file|
+      begin
+        io = file == $stdin ? file : File.open(file)
+      rescue SystemCallError
+        raise "cannot read: #{file.inspect}"
+      else
+        input = io.read
+      ensure
+        io&.close
+      end
+
+      next if input.empty?
+
+      begin
+        contracts = JSON.parse(input)
+      rescue JSON::JSONError
+        input_head = input.size > 16 ? input[0, 16] << '...' : input
+
+        raise "cannot parse input: #{input_head.inspect}"
+      end
+
+      contracts.fetch('contracts').each do |file_name, contract|
+        file, name = file_name.split(':')
+
+        yield file, name, contract
+      end
+    end
+  end
+
+  private_class_method :each_contract
+
+  def self.deploy(target, efir)
+    each_contract do |_file, name, contract|
+      next unless name == target
+
+      init, abi = contract.fetch_values('bin', 'abi')
+      receipt = efir.send_tx(init)
+      address = receipt.fetch('contractAddress')
+      puts JSON.fast_generate(address: address, abi: JSON.parse(abi))
+
+      return
+    end
+
+    raise "contract not found: #{target}"
+  end
+
+  private_class_method :deploy
+
+  def self.test(efir, contract_prefix: 'Test', function_prefix: 'test')
+    ef = [] # Errors and failures
+    count = 0
+
+    each_contract do |file, name, contract|
+      next unless name.start_with?(contract_prefix)
+
+      abi, bin = contract.fetch_values('abi', 'bin')
+
+      receipt = efir.send_tx(bin)
+      addr = receipt.fetch('contractAddress')
+
+      JSON.parse(abi).each do |desc|
+        type = desc['type']
+        next unless type.nil? || type == 'function'
+
+        func = desc['name']
+        next unless func&.start_with?(function_prefix)
+
+        inputs = desc.fetch('inputs')
+        unless inputs.empty?
+          warn "function #{func} is ignored because it accepts arguments"
+          next
+        end
+
+        count += 1
+
+        begin
+          efir.call(addr, func)
+        rescue Efir::RevertError => error
+          ef << "F: #{file}:#{name}:#{func}(): #{error}"
+          print 'F'
+        rescue Efir::Error => error
+          ef << "E: #{file}:#{name}:#{func}(): #{error}"
+          print 'E'
+        else
+          print '.'
+        end
+      end
+    end
+
+    puts if count.positive?
+    ef.each { |failure| puts(failure) }
+
+    ef.empty?
+  end
+
+  private_class_method :test
+end
+
+CLI.run(opts)
