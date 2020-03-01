@@ -1,0 +1,14 @@
+#!/usr/bin/env -S ruby -I lib -w
+# frozen_string_literal: true
+
+require 'cutest'
+require 'efir'
+
+ENV['EFIR_KEY'] ||= '4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7'
+ENV['EFIR_URL'] ||= 'http://127.0.0.1:8545'
+
+success = Cutest.run(Dir['tests/*.rb'])
+
+abort unless success
+
+# vim: ft=ruby

@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -e
+
+url=http://127.0.0.1:8545
+
+if curl --silent -X OPTIONS "$url"
+then
+  echo "Address is already in use: $url" > /dev/stderr
+  exit 1
+fi
+
+trap "kill %1 2>/dev/null && wait" EXIT INT
+
+run_tests() {
+  curl --silent --retry-connrefused --retry 5 -X OPTIONS "$url"
+
+  ./test
+}
+
+parity --chain dev --logging error &
+run_tests
+kill %1 && wait
+
+geth --dev --rpc --keystore tests/keystore --verbosity 0 &
+run_tests
+kill %1 && wait
+
+ganache-cli --account 0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7,100000000000000000000 --noVMErrorsOnRPCResponse --quiet > /dev/null &
+run_tests
+kill %1 && wait
