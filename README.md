@@ -2,11 +2,7 @@
 
 Easy way to test and deploy Ethereum contracts.
 
-## Usage
-
-### Testing contracts
-
-Step 1: Write a contract and tests.
+#### Step 1: Write a contract and tests.
 
 ```solidity
 // Echo.sol
@@ -34,13 +30,13 @@ Test contract names must start with "Test", e.g. `class TestEcho { ... }`.
 
 Test function names must start with "test", e.g. `function testThatItWorks() { ... }`.
 
-Step 2: Start your local Ethereum node.
+#### Step 2: Start your local Ethereum node.
 
-* Install parity and run:
+* parity
 
       parity --chain dev --jsonrpc-cors all
 
-* Or install geth
+* geth
 
   Create a developer account from a private key.
   The first account in your keystore will be pre-funded.
@@ -52,16 +48,11 @@ Step 2: Start your local Ethereum node.
 
       geth --dev --rpc --keystore devkeystore
 
-* Or install ganache-cli and run:
+* ganache-cli
 
       ganache-cli --account 0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7,100000000000000000000 --noVMErrorsOnRPCResponse
 
-Step 3: Compile and run your tests.
-
-    solc --combined-json=abi,bin Echo.sol > Echo.json
-    efir --test Echo.json
-
-Or simply:
+#### Step 3: Compile and run your tests.
 
     solc --combined-json=abi,bin Echo.sol | efir --test
 
@@ -110,7 +101,6 @@ echo.methods.back(7).call(function(error, result) {
 
 1. Add trusted certificate:
 
-todo
        curl -O https://raw.githubusercontent.com/soylent/efir/master/efir.pem
        gem cert --add efir.pem
 
