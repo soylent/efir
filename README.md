@@ -2,25 +2,18 @@
 
 Easy way to test and deploy Ethereum contracts.
 
-#### Step 1: Write a contract and tests.
+### Write a contract and tests
 
 ```solidity
 // Echo.sol
 
-// Example contract
 contract Echo {
-   // Receives a number and returns it
    function back(uint val) pure public returns (uint) { return val; }
 }
 
-// Test contract
 contract TestEcho {
-   // Test function
    function testThatItCanEchoBackNumbers() public {
-       // Create a contract
        Echo echo = new Echo();
-
-       // Call the back() function and check the result
        require(echo.back(1) == 1, "mismatch");
    }
 }
@@ -30,7 +23,7 @@ Test contract names must start with "Test", e.g. `class TestEcho { ... }`.
 
 Test function names must start with "test", e.g. `function testThatItWorks() { ... }`.
 
-#### Step 2: Start your local Ethereum node.
+### Start your local Ethereum node
 
 * parity
 
@@ -52,7 +45,7 @@ Test function names must start with "test", e.g. `function testThatItWorks() { .
 
       ganache-cli --account 0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7,100000000000000000000 --noVMErrorsOnRPCResponse
 
-#### Step 3: Compile and run your tests.
+### Compile and run your tests
 
     solc --combined-json=abi,bin Echo.sol | efir --test
 
@@ -64,7 +57,7 @@ file exists. Otherwise, it uses the following settings:
 
 Please see the Configuration section for more details.
 
-### Deploying a contract
+### Deploy a contract
 
 To deploy a contract to your local Ethereum chain:
 
@@ -97,20 +90,18 @@ echo.methods.back(7).call(function(error, result) {
 
 ## Installation
 
-#### Recommended installation method
+    gem install efir
+
+Alternative secure installation method:
 
 1. Add trusted certificate:
 
        curl -O https://raw.githubusercontent.com/soylent/efir/master/efir.pem
        gem cert --add efir.pem
 
-2. Install efir:
+1. Install efir:
 
        gem install efir -P HighSecurity
-
-#### Alternative installation method
-
-    gem install efir
 
 ## Configuration
 
