@@ -11,13 +11,13 @@ class Efir
       begin
         @key.private_key = OpenSSL::BN.new(key_hex, 16)
       rescue OpenSSL::BNError
-        raise ArgumentError, "invalid key: #{key.inspect}"
+        raise ArgumentError, 'invalid key'
       end
       @key.public_key = @key.group.generator.mul(@key.private_key)
       begin
         @key.check_key
       rescue OpenSSL::PKey::ECError
-        raise ArgumentError, "invalid key: #{key.inspect}"
+        raise ArgumentError, 'invalid key'
       end
     end
 

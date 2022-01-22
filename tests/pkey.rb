@@ -19,6 +19,9 @@ test 'that it can sign data and generate a recovery id' do
 end
 
 test 'that it checks private key' do
-  assert_raise(ArgumentError) { Efir::PKey.new('m') }
+  error = assert_raise(ArgumentError) { Efir::PKey.new('xx') }
+  assert !error.message.include?('xx'), error.message
+
   assert_raise(ArgumentError) { Efir::PKey.new('0') }
+  assert !error.message.include?('0'), error.message
 end
