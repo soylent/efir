@@ -18,14 +18,14 @@ run_tests() {
   ./test
 }
 
-parity --chain dev --logging error &
+openethereum --chain dev --logging error &
 run_tests
 kill %1 && wait
 
-geth --dev --rpc --keystore tests/keystore --verbosity 0 &
+geth --dev --http --keystore tests/keystore --verbosity 1 &
 run_tests
 kill %1 && wait
 
-ganache-cli --account 0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7,100000000000000000000 --noVMErrorsOnRPCResponse --quiet > /dev/null &
+ganache --wallet.accounts 0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7,100000000000000000000 --logging.quiet > /dev/null &
 run_tests
 kill %1 && wait

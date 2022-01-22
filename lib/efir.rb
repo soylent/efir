@@ -8,6 +8,14 @@ class Efir
   Error = Class.new(StandardError)
   TimeoutError = Class.new(Error)
   RevertError = Class.new(Error)
+  RPCError = Class.new(Error) do
+    attr_reader :data
+
+    def initialize(msg, data = nil)
+      super(msg)
+      @data = data
+    end
+  end
 
   Tx = Struct.new(
     :nonce,
@@ -100,11 +108,20 @@ class Efir
 
     begin
       @client.request('eth_estimateGas', to: to, data: data).to_i(16)
-    rescue Error
-      reason_hex = @client.request('eth_call', { to: to, data: data }, 'latest')
+    rescue RPCError => error
+      if error.data
+        reason_hex = error.data
+      else
+        begin
+          @client.request('eth_call', { to: to, data: data }, 'latest')
+        rescue RPCError => call_error
+          reason_hex = call_error.data
+        end
+        raise error unless reason_hex
+      end
       revert_string = decode_revert_string(reason_hex)
       raise RevertError, revert_string if revert_string
-      raise
+      raise error
     end
   end
 

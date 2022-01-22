@@ -36,14 +36,16 @@ class Efir
         message = error['message']
         data = error['data']
 
-        # Make parity behave like others
         if data.respond_to?(:to_str)
-          return data if data.delete_prefix!('Reverted ')
-
-          message << ' ' << data
+          # Make openethereum behave like geth
+          data.delete_prefix!('Reverted ')
+          data = nil if data == 'Reverted'
+        elsif data.respond_to?(:to_hash)
+          # Make ganache behave like geth
+          data = data['result']
         end
 
-        raise Error, message
+        raise RPCError.new(message, data)
       end
 
       json['result']

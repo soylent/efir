@@ -25,9 +25,9 @@ Test function names must start with "test", e.g. `function testThatItWorks() { .
 
 ### Start your local Ethereum node
 
-* parity
+* openethereum
 
-      parity --chain dev --jsonrpc-cors all
+      openethereum --chain dev --jsonrpc-cors all
 
 * geth
 
@@ -39,11 +39,11 @@ Test function names must start with "test", e.g. `function testThatItWorks() { .
 
   Start geth:
 
-      geth --dev --rpc --keystore devkeystore
+      geth --dev --http --keystore devkeystore
 
 * ganache-cli
 
-      ganache-cli --account 0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7,100000000000000000000 --noVMErrorsOnRPCResponse
+      ganache --wallet.accounts 0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7,100000000000000000000
 
 ### Compile and run your tests
 
@@ -132,7 +132,8 @@ Commonly used chains:
 
 Pull requests are welcome.
 
-1. Start local Ethereum node. Please see the Usage section.
+1. Start a local Ethereum node. Please see the "Start your local Ethereum node"
+   section.
 
 2. Compile test contracts:
 
