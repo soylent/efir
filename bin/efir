@@ -137,7 +137,7 @@ module CLI
       init, abi = contract.fetch_values('bin', 'abi')
       receipt = efir.send_tx(init)
       address = receipt.fetch('contractAddress')
-      puts JSON.fast_generate(address: address, abi: JSON.parse(abi))
+      puts JSON.fast_generate(address: address, abi: abi)
 
       return
     end
@@ -159,7 +159,7 @@ module CLI
       receipt = efir.send_tx(bin)
       addr = receipt.fetch('contractAddress')
 
-      JSON.parse(abi).each do |desc|
+      abi.each do |desc|
         type = desc['type']
         next unless type.nil? || type == 'function'
 

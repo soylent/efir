@@ -1,0 +1,12 @@
+require 'rake/clean'
+
+JSON_FILES = Rake::FileList['*.sol'].ext('.json')
+CLOBBER.include(JSON_FILES)
+
+desc "Compile all test contracts"
+task compile: JSON_FILES
+task default: :compile
+
+rule '.json' => '.sol' do |t|
+  sh "solc --combined-json=bin,abi #{t.source} > #{t.name}"
+end

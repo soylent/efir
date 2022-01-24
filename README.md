@@ -135,9 +135,9 @@ Pull requests are welcome.
 1. Start a local Ethereum node. Please see the "Start your local Ethereum node"
    section.
 
-2. Compile test contracts:
+2. Compile test contracts (requires solc installed):
 
-       make -C tests/contracts
+       rake -C tests/contracts
 
 3. Install development dependencies and run tests:
 
